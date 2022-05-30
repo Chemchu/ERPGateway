@@ -156,6 +156,11 @@ func (r *queryResolver) Venta(ctx context.Context, id string) (*model.Venta, err
 }
 
 func (r *queryResolver) Ventas(ctx context.Context, find *model.VentasFind, limit *int, order *string, offset *int) ([]*model.Venta, error) {
+	// graphqlRedirect.RedirectQuery("aaa")
+	// ctx
+	fmt.Println("#############################")
+	fmt.Println(ctx.Value("find"))
+	fmt.Println("#############################")
 	panic(fmt.Errorf("not implemented"))
 }
 
