@@ -11,53 +11,57 @@ import (
 )
 
 // // album represents data about a record album.
-type album struct {
-	ID     string  `json:"id"`
-	Title  string  `json:"title"`
-	Artist string  `json:"artist"`
-	Price  float64 `json:"price"`
+type APIResponse struct {
+	Message    *string `json:"message,omitempty"`
+	Data       *string `json:"data,omitempty"`
+	Successful *bool   `json:"successful,omitempty"`
 }
 
-// // albums slice to seed record album data.
-var albums = []album{
-	{ID: "1", Title: "Blue Train", Artist: "John Coltrane", Price: 56.99},
-	{ID: "2", Title: "Jeru", Artist: "Gerry Mulligan", Price: 17.99},
-	{ID: "3", Title: "Sarah Vaughan and Clifford Brown", Artist: "Sarah Vaughan", Price: 39.99},
+func getAPI(c *gin.Context) {
+	msg := "Saludos! Bienvenidos al APIGateway"
+	successful := true
+	APIRes := APIResponse{
+		Message:    &msg,
+		Successful: &successful,
+	}
+	c.IndentedJSON(http.StatusOK, APIRes)
 }
-
-// // getAlbums responds with the list of all albums as JSON.
-// func getAlbums(c *gin.Context) {
-// 	c.IndentedJSON(http.StatusOK, albums)
-// }
-
-// func getAPI(c *gin.Context) {
-// 	c.IndentedJSON(http.StatusOK, {})
-// }
 
 func getGraphQL(c *gin.Context) {
 	body, _ := ioutil.ReadAll(c.Request.Body)
-	request, err := http.NewRequest("POST", "http://localhost:8080/graphql", bytes.NewBuffer(body))
+
+	request, reqErr := http.NewRequest("POST", "http://localhost:9090/graphql", bytes.NewBufferString(string(body)))
 	request.Header.Add("Content-Type", "application/json")
+	if reqErr != nil {
+		fmt.Printf("The HTTP request failed with error %s\n", reqErr)
+	}
+	defer request.Body.Close()
 
 	client := &http.Client{Timeout: time.Second * 10}
 	response, err := client.Do(request)
-	fmt.Println(*response)
-
-	dbRespone, _ := ioutil.ReadAll(response.Body)
-	fmt.Println(string(dbRespone))
-
-	defer response.Body.Close()
 	if err != nil {
 		fmt.Printf("The HTTP request failed with error %s\n", err)
 	}
+	defer response.Body.Close()
 
-	c.IndentedJSON(http.StatusOK, albums)
+	resContent, _ := ioutil.ReadAll(response.Body)
+
+	msg := "Éxito al realizar la petición"
+	data := string(resContent)
+	successful := true
+	APIRes := APIResponse{
+		Message:    &msg,
+		Data:       &data,
+		Successful: &successful,
+	}
+
+	c.IndentedJSON(http.StatusOK, APIRes)
 }
 
 func main() {
 	router := gin.Default()
-	//router.GET("/api", getAPI)
+	router.GET("/api", getAPI)
 	router.POST("/graphql", getGraphQL)
 
-	router.Run("localhost:9090")
+	router.Run("localhost:8080")
 }
