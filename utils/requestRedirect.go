@@ -9,7 +9,7 @@ import (
 	"os"
 	"time"
 
-	types "erpgateway/types"
+	types "github.com/Chemchu/ERPGateway/types"
 )
 
 func RedirectRequest(body []byte) *types.APIResponse {

@@ -1,4 +1,4 @@
-module erpgateway
+module github.com/Chemchu/ERPGateway
 
 go 1.18
 

@@ -8,8 +8,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 
-	types "erpgateway/types"
-	request_redirect "erpgateway/utils"
+	types "github.com/Chemchu/ERPGateway/types"
+	request_redirect "github.com/Chemchu/ERPGateway/utils"
 )
 
 func getAPI(c *gin.Context) {
