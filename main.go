@@ -23,6 +23,17 @@ func getAPI(c *gin.Context) {
 	c.JSON(http.StatusOK, APIRes)
 }
 
+func getStats(c *gin.Context) {
+	msg := "Stadistics placeholder"
+	successful := true
+	APIRes := types.APIResponse{
+		Message:    &msg,
+		Successful: &successful,
+	}
+
+	c.JSON(http.StatusOK, APIRes)
+}
+
 func getGraphQL(c *gin.Context) {
 	body, _ := ioutil.ReadAll(c.Request.Body)
 	APIRes := request_redirect.RedirectRequest(body)
@@ -38,6 +49,7 @@ func main() {
 
 	router := gin.Default()
 	router.GET("/api", getAPI)
+	router.GET("/api/stats/*object", getStats)
 	router.POST("/graphql", getGraphQL)
 
 	router.Run("localhost:8080")
