@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -15,9 +16,15 @@ import (
 func getAPI(c *gin.Context) {
 	msg := "Saludos! Bienvenidos al APIGateway"
 	successful := true
+
+	APIData := types.APIData{Message: &msg, Successful: &successful}
+	out, err := json.Marshal(APIData)
+	if err != nil {
+		panic(err)
+	}
+	data := string(out)
 	APIRes := types.APIResponse{
-		Message:    &msg,
-		Successful: &successful,
+		Data: &data,
 	}
 
 	c.JSON(http.StatusOK, APIRes)
@@ -26,16 +33,24 @@ func getAPI(c *gin.Context) {
 func getStats(c *gin.Context) {
 	msg := "Stadistics placeholder"
 	successful := true
+	APIData := types.APIData{Message: &msg, Successful: &successful}
+	out, err := json.Marshal(APIData)
+	if err != nil {
+		panic(err)
+	}
+	data := string(out)
 	APIRes := types.APIResponse{
-		Message:    &msg,
-		Successful: &successful,
+		Data: &data,
 	}
 
 	c.JSON(http.StatusOK, APIRes)
 }
 
 func getGraphQL(c *gin.Context) {
-	body, _ := ioutil.ReadAll(c.Request.Body)
+	body, err := ioutil.ReadAll(c.Request.Body)
+	if err != nil {
+		panic(err)
+	}
 	APIRes := request_redirect.RedirectRequest(body)
 
 	c.JSON(http.StatusOK, APIRes)

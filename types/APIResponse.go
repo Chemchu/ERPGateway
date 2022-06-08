@@ -1,7 +1,10 @@
 package types
 
 type APIResponse struct {
+	Data *string `json:"data,omitempty"`
+}
+
+type APIData struct {
 	Message    *string `json:"message,omitempty"`
-	Data       *string `json:"data,omitempty"`
 	Successful *bool   `json:"successful,omitempty"`
 }
