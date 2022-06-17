@@ -9,8 +9,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 
-	types "github.com/Chemchu/ERPGateway/types"
-	request_redirect "github.com/Chemchu/ERPGateway/utils"
+	"github.com/Chemchu/ERPGateway/request_redirect"
+	"github.com/Chemchu/ERPGateway/types"
 )
 
 func getAPI(c *gin.Context) {
@@ -65,7 +65,7 @@ func main() {
 	router := gin.Default()
 	router.GET("/api", getAPI)
 	router.GET("/api/stats/*object", getStats)
-	router.POST("/graphql", getGraphQL)
+	router.POST("/api/graphql", getGraphQL)
 
 	router.Run("localhost:8080")
 }
