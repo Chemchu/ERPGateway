@@ -6,15 +6,14 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/Chemchu/ERPGateway/types"
 )
 
-func RedirectRequest(body []byte) *types.APIResponse {
-	backendUrl := os.Getenv("ERPBACK_URL")
-	request, reqErr := http.NewRequest("POST", backendUrl+"graphql", bytes.NewBufferString(string(body)))
+func RedirectRequest(body []byte, service string, method string) *types.APIResponse {
+	url := service
+	request, reqErr := http.NewRequest(method, url, bytes.NewBufferString(string(body)))
 	if reqErr != nil {
 		fmt.Printf("The HTTP request failed with error %s\n", reqErr)
 		panic(reqErr)

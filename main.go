@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
@@ -46,13 +47,23 @@ func getStats(c *gin.Context) {
 	c.JSON(http.StatusOK, APIRes)
 }
 
-func getGraphQL(c *gin.Context) {
+func PostRegistro(c *gin.Context) {
 	body, err := ioutil.ReadAll(c.Request.Body)
 	if err != nil {
 		panic(err)
 	}
-	APIRes := request_redirect.RedirectRequest(body)
 
+	APIRes := request_redirect.RedirectRequest(body, os.Getenv("ERPREGISTRATION_URL")+"api/empleados", "POST")
+	c.JSON(http.StatusOK, APIRes)
+}
+
+func PostGraphQL(c *gin.Context) {
+	body, err := ioutil.ReadAll(c.Request.Body)
+	if err != nil {
+		panic(err)
+	}
+
+	APIRes := request_redirect.RedirectRequest(body, os.Getenv("ERPBACK_URL")+"graphql", "POST")
 	c.JSON(http.StatusOK, APIRes)
 }
 
@@ -65,7 +76,8 @@ func main() {
 	router := gin.Default()
 	router.GET("/api", getAPI)
 	router.GET("/api/stats/*object", getStats)
-	router.POST("/api/graphql", getGraphQL)
+	router.POST("/api/registro", PostRegistro)
+	router.POST("/api/graphql", PostGraphQL)
 
 	router.Run("localhost:8080")
 }
