@@ -1,4 +1,4 @@
-package request_redirect
+package request
 
 import (
 	"bytes"
@@ -11,7 +11,7 @@ import (
 	"github.com/Chemchu/ERPGateway/types"
 )
 
-func RedirectRequest(body []byte, service string, method string) *types.APIResponse {
+func RedirectRequest(body []byte, service string, method string) *types.APIData {
 	url := service
 	request, reqErr := http.NewRequest(method, url, bytes.NewBufferString(string(body)))
 	if reqErr != nil {
@@ -36,7 +36,7 @@ func RedirectRequest(body []byte, service string, method string) *types.APIRespo
 	dbData, _ := json.Marshal(data)
 	resData := string(dbData)
 
-	APIRes := types.APIResponse{
+	APIRes := types.APIData{
 		Data: &resData,
 	}
 

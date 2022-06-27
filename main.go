@@ -6,11 +6,12 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 
-	"github.com/Chemchu/ERPGateway/request_redirect"
+	request "github.com/Chemchu/ERPGateway/request_redirect"
 	"github.com/Chemchu/ERPGateway/types"
 )
 
@@ -18,52 +19,50 @@ func getAPI(c *gin.Context) {
 	msg := "Saludos! Bienvenidos al APIGateway"
 	successful := true
 
-	APIData := types.APIData{Message: &msg, Successful: &successful}
+	APIData := types.APIResponse{Message: &msg, Successful: &successful}
 	out, err := json.Marshal(APIData)
 	if err != nil {
 		panic(err)
 	}
 	data := string(out)
-	APIRes := types.APIResponse{
+	APIRes := types.APIData{
 		Data: &data,
 	}
 
 	c.JSON(http.StatusOK, APIRes)
 }
 
-func getStats(c *gin.Context) {
-	msg := "Stadistics placeholder"
-	successful := true
-	APIData := types.APIData{Message: &msg, Successful: &successful}
-	out, err := json.Marshal(APIData)
+func getSummary(c *gin.Context) {
+	fecha, err := strconv.ParseInt(c.Param("fecha"), 10, 64)
 	if err != nil {
-		panic(err)
+		msg := "Formato de fecha erroneo. Debe ser Unix Epoch en milisegundos."
+		successful := false
+		c.JSON(http.StatusBadRequest, types.APIResponse{
+			Message:    &msg,
+			Successful: &successful,
+		})
+		return
 	}
-	data := string(out)
-	APIRes := types.APIResponse{
-		Data: &data,
-	}
-
-	c.JSON(http.StatusOK, APIRes)
+	c.JSON(http.StatusOK, request.RequestGetAnalysis(fecha, os.Getenv("ERPANALYSIS_URL")+"api/analytics/summary"))
 }
 
-func PostRegistro(c *gin.Context) {
+func postRegistro(c *gin.Context) {
 	body, err := ioutil.ReadAll(c.Request.Body)
 	if err != nil {
 		panic(err)
 	}
 
-	APIRes := request_redirect.RedirectRequest(body, os.Getenv("ERPREGISTRATION_URL")+"api/empleados", "POST")
+	APIRes := request.RedirectRequest(body, os.Getenv("ERPREGISTRATION_URL")+"api/empleados", "POST")
 	c.JSON(http.StatusOK, APIRes)
 }
 
-func PostGraphQL(c *gin.Context) {
+func postGraphQL(c *gin.Context) {
 	body, err := ioutil.ReadAll(c.Request.Body)
 	if err != nil {
 		panic(err)
 	}
 
-	APIRes := request_redirect.RedirectRequest(body, os.Getenv("ERPBACK_URL")+"graphql", "POST")
+	APIRes := request.RedirectRequest(body, os.Getenv("ERPBACK_URL")+"graphql", "POST")
 	c.JSON(http.StatusOK, APIRes)
 }
 
@@ -75,9 +74,12 @@ func main() {
 
 	router := gin.Default()
 	router.GET("/api", getAPI)
-	router.GET("/api/stats/*object", getStats)
-	router.POST("/api/registro", PostRegistro)
-	router.POST("/api/graphql", PostGraphQL)
+	router.GET("/api/analytics/summary/:fecha", getSummary)
+	router.POST("/api/registro", postRegistro)
+	router.POST("/api/graphql", postGraphQL)
 
-	router.Run("localhost:8080")
+	router.Run("0.0.0.0:8080")
+	// router.Run("localhost:8080")
+
+	log.Println("¡API Gateway iniciado!")
 }
