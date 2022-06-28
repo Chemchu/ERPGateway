@@ -19,7 +19,7 @@ func getAPI(c *gin.Context) {
 	msg := "Saludos! Bienvenidos al APIGateway"
 	successful := true
 
-	APIData := types.APIResponse{Message: &msg, Successful: &successful}
+	APIData := types.APIResponse{Message: &msg, Successful: &successful, Data: nil}
 	out, err := json.Marshal(APIData)
 	if err != nil {
 		panic(err)
@@ -40,6 +40,7 @@ func getSummary(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, types.APIResponse{
 			Message:    &msg,
 			Successful: &successful,
+			Data:       nil,
 		})
 		return
 	}
@@ -79,7 +80,6 @@ func main() {
 	router.POST("/api/graphql", postGraphQL)
 
 	router.Run("0.0.0.0:8080")
-	// router.Run("localhost:8080")
 
 	log.Println("¡API Gateway iniciado!")
 }

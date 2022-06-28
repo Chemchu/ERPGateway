@@ -14,7 +14,7 @@ import (
 	"github.com/Chemchu/ERPGateway/types"
 )
 
-func RequestGetAnalysis(fecha int64, service string) *types.APIData {
+func RequestGetAnalysis(fecha int64, service string) *types.APIResponse {
 	body := GetSalesFromDB(dateFormatter.GetStartOfDay(fecha), dateFormatter.GetEndOfDay(fecha))
 	url := service
 	request, reqErr := http.NewRequest("POST", url, bytes.NewBufferString(*body.Data))
@@ -33,28 +33,31 @@ func RequestGetAnalysis(fecha int64, service string) *types.APIData {
 	}
 	defer response.Body.Close()
 
-	var result map[string]interface{}
 	resContent, _ := ioutil.ReadAll(response.Body)
+	var result types.APIResponse
 	json.Unmarshal([]byte(resContent), &result)
-	data := result["data"].(map[string]interface{})
-	dbData, _ := json.Marshal(data)
-	resData := string(dbData)
 
-	APIRes := types.APIData{
-		Data: &resData,
+	var msg *string = result.Message
+	var successful *bool = result.Successful
+	var data *string = result.Data
+
+	APIRes := types.APIResponse{
+		Message:    msg,
+		Successful: successful,
+		Data:       data,
 	}
 
 	return &APIRes
 }
 
-func GetSalesFromDB(fechaInicial int64, fechaFinal int64) types.APIData {
+func GetSalesFromDB(fechaInicial int64, fechaFinal int64) types.APIResponse {
 	body, err := json.Marshal(types.GraphQLQuery{
 		Query: graphQL.QUERY_VENTAS(),
 		Variables: fmt.Sprintf(`
 			{
 				"find": {
-					"fechaInicial": %d,
-					"fechaFinal": %d
+					"fechaInicial": "%d",
+					"fechaFinal": "%d"
 				}
 			}
 		`, fechaInicial, fechaFinal),
@@ -79,23 +82,35 @@ func GetSalesFromDB(fechaInicial int64, fechaFinal int64) types.APIData {
 		fmt.Printf("The HTTP request failed with error %s\n", err)
 		panic(err)
 	}
-	defer response.Body.Close()
 
-	//var result map[string]interface{}
 	resContent, err := ioutil.ReadAll(response.Body)
 	if err != nil {
 		fmt.Printf("client: could not read response body: %s\n", err)
 	}
 
-	fmt.Println(string(resContent))
+	defer response.Body.Close()
 
-	// json.Unmarshal([]byte(resContent), &result)
-	// data := result["data"].(map[string]interface{})
-	// dbData, _ := json.Marshal(data)
-	resData := string(resContent)
+	var result map[string]interface{}
+	json.Unmarshal([]byte(resContent), &result)
+	dbData := result["data"].(map[string]interface{})
+	dataBytes, err := json.Marshal(dbData)
 
-	APIRes := types.APIData{
-		Data: &resData,
+	if err != nil {
+		panic("Error en marshalling")
+	}
+
+	var ventasResult map[string][]types.Venta
+	json.Unmarshal([]byte(dataBytes), &ventasResult)
+	dbVentas := ventasResult["ventas"]
+	ventasBytes, err := json.Marshal(dbVentas)
+
+	if err != nil {
+		panic("Error en marshalling")
+	}
+
+	data := string(ventasBytes)
+	APIRes := types.APIResponse{
+		Data: &data,
 	}
 
 	return APIRes
