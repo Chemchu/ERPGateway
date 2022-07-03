@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -74,12 +75,13 @@ func main() {
 	}
 
 	router := gin.Default()
+	router.GET("/", getAPI)
 	router.GET("/api", getAPI)
 	router.GET("/api/analytics/summary/:fecha", getSummary)
 	router.POST("/api/registro", postRegistro)
 	router.POST("/api/graphql", postGraphQL)
 
-	router.Run("0.0.0.0:8080")
+	router.Run(fmt.Sprintf("0.0.0.0:%s", os.Getenv("GATEWAY_PORT")))
 
 	log.Println("¡API Gateway iniciado!")
 }
