@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -8,6 +9,8 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
@@ -68,6 +71,56 @@ func postGraphQL(c *gin.Context) {
 	c.JSON(http.StatusOK, APIRes)
 }
 
+func postRegistroConfirmacion(c *gin.Context) {
+	body, err := ioutil.ReadAll(c.Request.Body)
+	if err != nil {
+		panic(err)
+	}
+
+	url := os.Getenv("ERPREGISTRATION_URL") + "api/confirmacion/" + c.Param("token")
+	jsonData := fmt.Sprintf(`{"password": "%s"}`, strings.Split(string(body), "=")[1])
+	request, reqErr := http.NewRequest("POST", url, bytes.NewBuffer([]byte(jsonData)))
+	if reqErr != nil {
+		fmt.Printf("The HTTP request failed with error %s\n", reqErr)
+		panic(reqErr)
+	}
+	request.Header.Set("Content-type", "application/json")
+
+	client := &http.Client{Timeout: time.Second * 10}
+	response, err := client.Do(request)
+	if err != nil {
+		fmt.Printf("The HTTP request failed with error %s\n", err)
+		panic(err)
+	}
+
+	defer response.Body.Close()
+
+	resContent, _ := ioutil.ReadAll(response.Body)
+	c.Data(http.StatusOK, "text/html; charset=utf-8", resContent)
+}
+
+func getRegistroConfirmacion(c *gin.Context) {
+	token := c.Param("token")
+	url := os.Getenv("ERPREGISTRATION_URL") + "api/confirmacion/" + token
+	request, reqErr := http.NewRequest("GET", url, nil)
+	if reqErr != nil {
+		fmt.Printf("The HTTP request failed with error %s\n", reqErr)
+		panic(reqErr)
+
+	}
+	client := &http.Client{Timeout: time.Second * 10}
+	response, err := client.Do(request)
+	if err != nil {
+		fmt.Printf("The HTTP request failed with error %s\n", err)
+		panic(err)
+	}
+
+	defer response.Body.Close()
+
+	resContent, _ := ioutil.ReadAll(response.Body)
+	c.Data(http.StatusOK, "text/html; charset=utf-8", resContent)
+}
+
 func main() {
 	errEnv := godotenv.Load(".env")
 	if errEnv != nil {
@@ -79,6 +132,8 @@ func main() {
 	router.GET("/api", getAPI)
 	router.GET("/api/analytics/summary/:fecha", getSummary)
 	router.POST("/api/registro", postRegistro)
+	router.GET("/api/registro/confirmacion/:token", getRegistroConfirmacion)
+	router.POST("/api/registro/confirmacion/:token", postRegistroConfirmacion)
 	router.POST("/api/graphql", postGraphQL)
 
 	router.Run(fmt.Sprintf("0.0.0.0:%s", os.Getenv("GATEWAY_PORT")))
