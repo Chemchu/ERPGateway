@@ -8,7 +8,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strconv"
 	"strings"
 	"time"
 
@@ -37,18 +36,18 @@ func getAPI(c *gin.Context) {
 }
 
 func getSummary(c *gin.Context) {
-	fecha, err := strconv.ParseInt(c.Param("fecha"), 10, 64)
-	if err != nil {
-		msg := "Formato de fecha erroneo. Debe ser Unix Epoch en milisegundos."
-		successful := false
-		c.JSON(http.StatusBadRequest, types.APIResponse{
-			Message:    &msg,
-			Successful: &successful,
-			Data:       nil,
-		})
-		return
-	}
-	c.JSON(http.StatusOK, request.RequestGetAnalysis(fecha, os.Getenv("ERPANALYSIS_URL")+"api/analytics/summary"))
+	// fechas, err := strconv.ParseInt(c.Param("fecha"), 10, 64)
+	// if err != nil {
+	// 	msg := "Formato de fecha erroneo. Debe ser Unix Epoch en milisegundos."
+	// 	successful := false
+	// 	c.JSON(http.StatusBadRequest, types.APIResponse{
+	// 		Message:    &msg,
+	// 		Successful: &successful,
+	// 		Data:       nil,
+	// 	})
+	// 	return
+	// }
+	c.JSON(http.StatusOK, request.RequestGetAnalysis(c.Param("fecha"), os.Getenv("ERPANALYSIS_URL")+"api/analytics/summary"))
 }
 
 func postRegistro(c *gin.Context) {

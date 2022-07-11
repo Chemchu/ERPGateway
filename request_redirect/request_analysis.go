@@ -7,6 +7,8 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/Chemchu/ERPGateway/dateFormatter"
@@ -14,8 +16,38 @@ import (
 	"github.com/Chemchu/ERPGateway/types"
 )
 
-func RequestGetAnalysis(fecha int64, service string) *types.APIResponse {
-	body := GetSalesFromDB(dateFormatter.GetStartOfDay(fecha), dateFormatter.GetEndOfDay(fecha))
+func RequestGetAnalysis(fechasParam string, service string) *types.APIResponse {
+	fechas := strings.Split(fechasParam, "&")
+	msgFallback := "No se ha podido completar el análisis"
+	successfulFallback := false
+	var failResponse types.APIResponse = types.APIResponse{
+		Message:    &msgFallback,
+		Successful: &successfulFallback,
+	}
+
+	body := types.APIResponse{}
+
+	switch len(fechas) {
+	case 2:
+		fechaInicial, err1 := strconv.ParseInt(fechas[0], 10, 64)
+		if err1 != nil {
+			return &failResponse
+		}
+		fechaFinal, err2 := strconv.ParseInt(fechas[1], 10, 64)
+		if err2 != nil {
+			return &failResponse
+		}
+		body = GetSalesFromDB(dateFormatter.GetStartOfDay(fechaInicial), dateFormatter.GetEndOfDay(fechaFinal))
+	case 1:
+		fecha, err1 := strconv.ParseInt(fechas[0], 10, 64)
+		if err1 != nil {
+			return &failResponse
+		}
+		body = GetSalesFromDB(dateFormatter.GetStartOfDay(fecha), dateFormatter.GetEndOfDay(fecha))
+	default:
+		return &failResponse
+	}
+
 	url := service
 	request, reqErr := http.NewRequest("POST", url, bytes.NewBufferString(*body.Data))
 	if reqErr != nil {
@@ -58,7 +90,8 @@ func GetSalesFromDB(fechaInicial int64, fechaFinal int64) types.APIResponse {
 				"find": {
 					"fechaInicial": "%d",
 					"fechaFinal": "%d"
-				}
+				},
+				"limit": 20000
 			}
 		`, fechaInicial, fechaFinal),
 	})
