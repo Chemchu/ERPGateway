@@ -37,13 +37,13 @@ func RequestGetAnalysis(fechasParam string, service string) *types.APIResponse {
 		if err2 != nil {
 			return &failResponse
 		}
-		body = GetSalesFromDB(dateFormatter.GetStartOfDay(fechaInicial), dateFormatter.GetEndOfDay(fechaFinal))
+		body = GetSalesFromDB(dateFormatter.fechaInicial, dateFormatter.fechaFinal)
 	case 1:
 		fecha, err1 := strconv.ParseInt(fechas[0], 10, 64)
 		if err1 != nil {
 			return &failResponse
 		}
-		body = GetSalesFromDB(dateFormatter.GetStartOfDay(fecha), dateFormatter.GetEndOfDay(fecha))
+		body = GetSalesFromDB(dateFormatter.fecha, dateFormatter.fecha)
 	default:
 		return &failResponse
 	}
