@@ -11,12 +11,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Chemchu/ERPGateway/dateFormatter"
-	graphQL "github.com/Chemchu/ERPGateway/graphQLquerys"
+	dateFormatter "github.com/Chemchu/ERPGateway/date_formatter"
+	graphQL "github.com/Chemchu/ERPGateway/graphQL_querys"
 	"github.com/Chemchu/ERPGateway/types"
 )
 
-func RequestGetAnalysis(fechasParam string, service string) *types.APIResponse {
+func GetAnalysis(fechasParam string, service string) *types.APIResponse {
 	fechas := strings.Split(fechasParam, "&")
 	msgFallback := "No se ha podido completar el análisis"
 	successfulFallback := false
