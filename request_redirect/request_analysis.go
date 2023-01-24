@@ -83,7 +83,7 @@ func GetAnalysis(fechasParam string, service string) *types.APIResponse {
 }
 
 func GetSalesFromDB(fechaInicial int64, fechaFinal int64) types.APIResponse {
-	body, err := json.Marshal(types.GraphQLQuery{
+	requestBody, err := json.Marshal(types.GraphQLQuery{
 		Query: graphQL.QUERY_VENTAS(),
 		Variables: fmt.Sprintf(`
 			{
@@ -100,31 +100,11 @@ func GetSalesFromDB(fechaInicial int64, fechaFinal int64) types.APIResponse {
 		panic("Error al crear el body de la consulta a DB - GetSalesFromDB")
 	}
 
-	request, reqErr := http.NewRequest("POST", os.Getenv("ERPBACK_URL")+"graphql", bytes.NewBufferString(string(body)))
-	if reqErr != nil {
-		fmt.Printf("The HTTP request failed with error %s\n", reqErr)
-		panic(reqErr)
-	}
-
-	request.Header.Add("Content-Type", "application/json")
-	defer request.Body.Close()
-
-	client := &http.Client{Timeout: time.Second * 10}
-	response, err := client.Do(request)
-	if err != nil {
-		fmt.Printf("The HTTP request failed with error %s\n", err)
-		panic(err)
-	}
-
-	resContent, err := ioutil.ReadAll(response.Body)
-	if err != nil {
-		fmt.Printf("client: could not read response body: %s\n", err)
-	}
-
-	defer response.Body.Close()
+	var metodoHttp types.HttpMethod = types.POST
+	response := RequestDB(metodoHttp, string(requestBody))
 
 	var result map[string]interface{}
-	json.Unmarshal([]byte(resContent), &result)
+	json.Unmarshal([]byte(response), &result)
 	dbData := result["data"].(map[string]interface{})
 	dataBytes, err := json.Marshal(dbData)
 
@@ -147,4 +127,30 @@ func GetSalesFromDB(fechaInicial int64, fechaFinal int64) types.APIResponse {
 	}
 
 	return APIRes
+}
+
+func RequestDB(httpMethod types.HttpMethod, body string) []byte {
+	request, reqErr := http.NewRequest(httpMethod.String(), os.Getenv("ERPBACK_URL")+"graphql", bytes.NewBufferString(body))
+	if reqErr != nil {
+		fmt.Printf("The HTTP request failed with error %s\n", reqErr)
+		panic(reqErr)
+	}
+
+	request.Header.Add("Content-Type", "application/json")
+	defer request.Body.Close()
+
+	client := &http.Client{Timeout: time.Second * 10}
+	response, err := client.Do(request)
+	if err != nil {
+		fmt.Printf("The HTTP request failed with error %s\n", err)
+		panic(err)
+	}
+
+	resContent, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		fmt.Printf("client: could not read response body: %s\n", err)
+	}
+
+	defer response.Body.Close()
+	return resContent
 }
