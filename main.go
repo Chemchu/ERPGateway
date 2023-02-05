@@ -21,7 +21,7 @@ func main() {
 	router.GET("/", endpoints.GetAPI)
 	router.GET("/api", endpoints.GetAPI)
 	router.GET("/api/analytics/ventas/summary/:fecha", endpoints_summary.GetVentasSummary)
-	router.GET("/api/analytics/productos/summary/:fecha", nil)
+	router.POST("/api/analytics/productos/summary/:fecha", endpoints_summary.GetProductosSummary)
 	router.POST("/api/registro", endpoints.PostRegistro)
 	router.GET("/api/registro/confirmacion/:token", endpoints.GetRegistroConfirmacion)
 	router.POST("/api/registro/confirmacion/:token", endpoints.PostRegistroConfirmacion)

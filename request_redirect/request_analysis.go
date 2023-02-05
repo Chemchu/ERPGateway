@@ -16,8 +16,7 @@ import (
 	"github.com/Chemchu/ERPGateway/types"
 )
 
-func GetAnalysis(fechasParam string, service string) *types.APIResponse {
-	fechas := strings.Split(fechasParam, "&")
+func GetSalesAnalysis(fechasParam string, urlEndpoint string) *types.APIResponse {
 	msgFallback := "No se ha podido completar el análisis"
 	successfulFallback := false
 	var failResponse types.APIResponse = types.APIResponse{
@@ -27,6 +26,8 @@ func GetAnalysis(fechasParam string, service string) *types.APIResponse {
 
 	body := types.APIResponse{}
 
+	// Intenta obtener un array de fechas para realizar el analisis.
+	fechas := strings.Split(fechasParam, "&")
 	switch len(fechas) {
 	case 2:
 		fechaInicial, err1 := strconv.ParseInt(fechas[0], 10, 64)
@@ -48,26 +49,68 @@ func GetAnalysis(fechasParam string, service string) *types.APIResponse {
 		return &failResponse
 	}
 
-	url := service
-	request, reqErr := http.NewRequest("POST", url, bytes.NewBufferString(*body.Data))
-	if reqErr != nil {
-		fmt.Printf("The HTTP request failed with error %s\n", reqErr)
-		panic(reqErr)
-	}
-	request.Header.Add("Content-Type", "application/json")
-	defer request.Body.Close()
+	var metodoHttp types.HttpMethod = types.POST
+	var resContent = FetchWrapper(metodoHttp, urlEndpoint, *body.Data)
 
-	client := &http.Client{Timeout: time.Second * 10}
-	response, err := client.Do(request)
-	if err != nil {
-		fmt.Printf("The HTTP request failed with error %s\n", err)
-		panic(err)
-	}
-	defer response.Body.Close()
-
-	resContent, _ := ioutil.ReadAll(response.Body)
 	var result types.APIResponse
-	json.Unmarshal([]byte(resContent), &result)
+	json.Unmarshal(resContent, &result)
+
+	var msg *string = result.Message
+	var successful *bool = result.Successful
+	var data *string = result.Data
+
+	APIRes := types.APIResponse{
+		Message:    msg,
+		Successful: successful,
+		Data:       data,
+	}
+
+	return &APIRes
+}
+
+func GetProductsAnalysis(fechasParam string, urlEndpoint string, productsIds []string) *types.APIResponse {
+	msgFallback := "No se ha podido completar el análisis"
+	successfulFallback := false
+	var failResponse types.APIResponse = types.APIResponse{
+		Message:    &msgFallback,
+		Successful: &successfulFallback,
+	}
+
+	body := types.APIResponse{}
+
+	// Intenta obtener un array de fechas para realizar el analisis.
+	fechas := strings.Split(fechasParam, "&")
+	switch len(fechas) {
+	case 2:
+		fechaInicial, err1 := strconv.ParseInt(fechas[0], 10, 64)
+		if err1 != nil {
+			return &failResponse
+		}
+		fechaFinal, err2 := strconv.ParseInt(fechas[1], 10, 64)
+		if err2 != nil {
+			return &failResponse
+		}
+		body = GetSalesFromDB(fechaInicial, fechaFinal)
+	case 1:
+		fecha, err1 := strconv.ParseInt(fechas[0], 10, 64)
+		if err1 != nil {
+			return &failResponse
+		}
+		body = GetSalesFromDB(dateFormatter.GetStartOfDay(fecha), dateFormatter.GetEndOfDay(fecha))
+	default:
+		return &failResponse
+	}
+
+	// TODO: Buscar los productos que le interesan al cliente (realizar un filtrado)
+	// for _, venta := range body.Data {
+	//
+	// }
+
+	var metodoHttp types.HttpMethod = types.POST
+	var resContent = FetchWrapper(metodoHttp, urlEndpoint, *body.Data)
+
+	var result types.APIResponse
+	json.Unmarshal(resContent, &result)
 
 	var msg *string = result.Message
 	var successful *bool = result.Successful
@@ -101,7 +144,7 @@ func GetSalesFromDB(fechaInicial int64, fechaFinal int64) types.APIResponse {
 	}
 
 	var metodoHttp types.HttpMethod = types.POST
-	response := RequestDB(metodoHttp, string(requestBody))
+	response := FetchWrapper(metodoHttp, os.Getenv("ERPBACK_URL")+"graphql", string(requestBody))
 
 	var result map[string]interface{}
 	json.Unmarshal([]byte(response), &result)
@@ -129,8 +172,9 @@ func GetSalesFromDB(fechaInicial int64, fechaFinal int64) types.APIResponse {
 	return APIRes
 }
 
-func RequestDB(httpMethod types.HttpMethod, body string) []byte {
-	request, reqErr := http.NewRequest(httpMethod.String(), os.Getenv("ERPBACK_URL")+"graphql", bytes.NewBufferString(body))
+func FetchWrapper(httpMethod types.HttpMethod, endpointUrl string, body string) []byte {
+	// request, reqErr := http.NewRequest(httpMethod.String(), os.Getenv("ERPBACK_URL")+"graphql", bytes.NewBufferString(body))
+	request, reqErr := http.NewRequest(httpMethod.String(), endpointUrl, bytes.NewBufferString(body))
 	if reqErr != nil {
 		fmt.Printf("The HTTP request failed with error %s\n", reqErr)
 		panic(reqErr)
@@ -148,7 +192,8 @@ func RequestDB(httpMethod types.HttpMethod, body string) []byte {
 
 	resContent, err := ioutil.ReadAll(response.Body)
 	if err != nil {
-		fmt.Printf("client: could not read response body: %s\n", err)
+		fmt.Printf("Client: could not read response body: %s\n", err)
+		panic(err)
 	}
 
 	defer response.Body.Close()

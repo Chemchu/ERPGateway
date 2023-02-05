@@ -9,5 +9,5 @@ import (
 )
 
 func GetVentasSummary(c *gin.Context) {
-	c.JSON(http.StatusOK, request.GetAnalysis(c.Param("fecha"), os.Getenv("ERPANALYSIS_URL")+"api/analytics/ventas/summary"))
+	c.JSON(http.StatusOK, request.GetSalesAnalysis(c.Param("fecha"), os.Getenv("ERPANALYSIS_URL")+"api/analytics/ventas/summary"))
 }
